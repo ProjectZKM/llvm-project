@@ -256,6 +256,8 @@ def HasVirt  : Predicate<"Subtarget->hasVirt()">,
                AssemblerPredicate<(all_of FeatureVirt)>;
 def HasGINV  : Predicate<"Subtarget->hasGINV()">,
                AssemblerPredicate<(all_of FeatureGINV)>;
+def HasDIVr6 : Predicate<"Subtarget->hasDIVr6()">,
+               AssemblerPredicate<(all_of FeatureDIVr6)>;
 // TODO: Add support for FPOpFusion::Standard
 def AllowFPOpFusion : Predicate<"TM.Options.AllowFPOpFusion =="
                                 " FPOpFusion::Fast">;
@@ -433,6 +435,11 @@ class INSN_MIPS4_32R2 {
 // MIPS32r6 and MIPS64r6.
 class INSN_MIPS5_32R2_NOT_32R6_64R6 {
   list<Predicate> InsnPredicates = [HasMips5_32r2, NotMips32r6, NotMips64r6];
+  list<Predicate> EncodingPredicates = [HasStdEnc];
+}
+
+class INSN_HAS_DIVR6 {
+  list<Predicate> InsnPredicates = [HasDIVr6];
   list<Predicate> EncodingPredicates = [HasStdEnc];
 }
 

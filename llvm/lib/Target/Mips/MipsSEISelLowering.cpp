@@ -260,6 +260,13 @@ MipsSETargetLowering::MipsSETargetLowering(const MipsTargetMachine &TM,
     setOperationAction(ISD::STORE, MVT::f64, Custom);
   }
 
+  if (Subtarget.hasDIVr6()) {
+    setOperationAction(ISD::SDIV, MVT::i32, Legal);
+    setOperationAction(ISD::UDIV, MVT::i32, Legal);
+    setOperationAction(ISD::SREM, MVT::i32, Legal);
+    setOperationAction(ISD::UREM, MVT::i32, Legal);
+  }
+
   if (Subtarget.hasMips32r6()) {
     // MIPS32r6 replaces the accumulator-based multiplies with a three register
     // instruction

@@ -114,6 +114,10 @@ class MipsSubtarget : public MipsGenSubtargetInfo {
   // CPU supports cnMIPSP (Cavium Networks Octeon+ CPU).
   bool HasCnMipsP;
 
+  // CPU supports div/divu/mod/modu of MIPSr6.
+  bool HasDIVr6;
+  bool HasZKM;
+
   // isLinux - Target system is Linux. Is false we consider ELFOS for now.
   bool IsLinux;
 
@@ -201,6 +205,9 @@ class MipsSubtarget : public MipsGenSubtargetInfo {
   // Disable unaligned load store for r6.
   bool StrictAlign;
 
+  // All the instructions have the same cost.
+  bool InstSameCost;
+
   /// The minimum alignment known to hold of the stack frame on
   /// entry to the function and which must be maintained by every function.
   Align stackAlignment;
@@ -282,6 +289,8 @@ public:
 
   bool hasCnMips() const { return HasCnMips; }
   bool hasCnMipsP() const { return HasCnMipsP; }
+  bool hasDIVr6() const { return HasDIVr6; }
+  bool hasZKM() const { return HasZKM; }
 
   bool isLittle() const { return IsLittle; }
   bool isABICalls() const { return !NoABICalls; }
@@ -380,6 +389,8 @@ public:
   bool systemSupportsUnalignedAccess() const {
     return hasMips32r6() && !StrictAlign;
   }
+
+  bool isInstSameCost() const { return InstSameCost; }
 
   // Set helper classes
   void setHelperClassesMips16();
