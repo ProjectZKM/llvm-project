@@ -212,6 +212,17 @@ def FeatureStrictAlign
     : SubtargetFeature<"strict-align", "StrictAlign", "true",
                        "Disable unaligned load store for r6">;
 
+def FeatureInstSameCost
+    : SubtargetFeature<"inst-same-cost", "InstSameCost", "true",
+                       "All the instructions have the same cost">;
+
+def FeatureDIVr6 : SubtargetFeature<"divr6", "HasDIVr6",
+                                     "true", "Support div/divu/mod/modu instruction from MIPS32r6",
+                                     [FeatureMips32r2]>;
+def FeatureZKM   : SubtargetFeature<"zkm", "HasZKM",
+                                "true", "Mips32r2 with ZKM extension Support",
+                                [FeatureMips32r2, FeatureDIVr6]>;
+
 //===----------------------------------------------------------------------===//
 // Register File, Calling Conv, Instruction Descriptions
 //===----------------------------------------------------------------------===//
@@ -246,6 +257,7 @@ def : Proc<"mips1", [FeatureMips1]>;
 def : Proc<"mips2", [FeatureMips2]>;
 def : Proc<"mips32", [FeatureMips32]>;
 def : Proc<"mips32r2", [FeatureMips32r2]>;
+def : Proc<"zkm", [FeatureMips32r2, FeatureInstSameCost, FeatureZKM]>;
 def : Proc<"mips32r3", [FeatureMips32r3]>;
 def : Proc<"mips32r5", [FeatureMips32r5]>;
 def : Proc<"mips32r6", [FeatureMips32r6]>;
