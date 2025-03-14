@@ -212,6 +212,10 @@ def FeatureStrictAlign
     : SubtargetFeature<"strict-align", "StrictAlign", "true",
                        "Disable unaligned load store for r6">;
 
+def FeatureInstSameCost
+    : SubtargetFeature<"inst-same-cost", "InstSameCost", "true",
+                       "All the instructions have the same cost">;
+
 //===----------------------------------------------------------------------===//
 // Register File, Calling Conv, Instruction Descriptions
 //===----------------------------------------------------------------------===//
