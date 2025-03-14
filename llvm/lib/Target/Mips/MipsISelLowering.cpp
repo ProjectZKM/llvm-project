@@ -1248,6 +1248,14 @@ bool MipsTargetLowering::isCheapToSpeculateCtlz(Type *Ty) const {
   return Subtarget.hasMips32();
 }
 
+bool MipsTargetLowering::isIntDivCheap(EVT VT, AttributeList Attr) const {
+  // When aggressively optimizing for code size, we prefer to use a div
+  // instruction, as it is usually smaller than the alternative sequence.
+  bool OptSize = Attr.hasFnAttr(Attribute::MinSize);
+  bool isInstSameCost = Subtarget.isInstSameCost();
+  return OptSize || isInstSameCost;
+}
+
 bool MipsTargetLowering::hasBitTest(SDValue X, SDValue Y) const {
   // We can use ANDI+SLTIU as a bit test. Y contains the bit position.
   // For MIPSR2 or later, we may be able to use the `ext` instruction or its'

@@ -202,6 +202,9 @@ class MipsSubtarget : public MipsGenSubtargetInfo {
   // Disable unaligned load store for r6.
   bool StrictAlign;
 
+  // All the instructions have the same cost.
+  bool InstSameCost;
+
   /// The minimum alignment known to hold of the stack frame on
   /// entry to the function and which must be maintained by every function.
   Align stackAlignment;
@@ -381,6 +384,8 @@ public:
   bool systemSupportsUnalignedAccess() const {
     return hasMips32r6() && !StrictAlign;
   }
+
+  bool isInstSameCost() const { return InstSameCost; }
 
   // Set helper classes
   void setHelperClassesMips16();

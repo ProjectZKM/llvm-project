@@ -293,6 +293,8 @@ class TargetRegisterClass;
     bool shouldFoldConstantShiftPairToMask(const SDNode *N,
                                            CombineLevel Level) const override;
 
+    bool isIntDivCheap(EVT VT, AttributeList Attr) const override;
+
     /// Return the register type for a given MVT, ensuring vectors are treated
     /// as a series of gpr sized integers.
     MVT getRegisterTypeForCallingConv(LLVMContext &Context, CallingConv::ID CC,
