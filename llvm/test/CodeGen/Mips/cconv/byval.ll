@@ -96,9 +96,9 @@ define dso_local void @g() #0 {
 ; N32-NEXT:    subu $sp, $sp, $1
 ; N32-NEXT:    addiu $1, $sp, 8
 ; N32-NEXT:    addiu $5, $1, 64
-; N32-NEXT:    ori $6, $zero, 65456
-; N32-NEXT:    jal memcpy
 ; N32-NEXT:    move $4, $sp
+; N32-NEXT:    jal memcpy
+; N32-NEXT:    ori $6, $zero, 65456
 ; N32-NEXT:    ld $11, 64($sp)
 ; N32-NEXT:    ld $10, 56($sp)
 ; N32-NEXT:    ld $9, 48($sp)
@@ -130,9 +130,9 @@ define dso_local void @g() #0 {
 ; N64-NEXT:    dsubu $sp, $sp, $1
 ; N64-NEXT:    daddiu $1, $sp, 8
 ; N64-NEXT:    daddiu $5, $1, 64
-; N64-NEXT:    ori $6, $zero, 65456
-; N64-NEXT:    jal memcpy
 ; N64-NEXT:    move $4, $sp
+; N64-NEXT:    jal memcpy
+; N64-NEXT:    ori $6, $zero, 65456
 ; N64-NEXT:    ld $11, 64($sp)
 ; N64-NEXT:    ld $10, 56($sp)
 ; N64-NEXT:    ld $9, 48($sp)
@@ -212,9 +212,9 @@ define dso_local void @g2(ptr %a) {
 ; O32-NEXT:    sw $4, -4($1)
 ; O32-NEXT:    addiu $sp, $sp, -16
 ; O32-NEXT:    addiu $16, $sp, 8
-; O32-NEXT:    ori $6, $zero, 65520
-; O32-NEXT:    jal memcpy
 ; O32-NEXT:    move $4, $16
+; O32-NEXT:    jal memcpy
+; O32-NEXT:    ori $6, $zero, 65520
 ; O32-NEXT:    addiu $sp, $sp, 16
 ; O32-NEXT:    ori $1, $zero, 65520
 ; O32-NEXT:    subu $sp, $sp, $1
@@ -259,15 +259,15 @@ define dso_local void @g2(ptr %a) {
 ; N32-NEXT:    addu $1, $sp, $1
 ; N32-NEXT:    sw $4, -4($1)
 ; N32-NEXT:    addiu $16, $sp, 8
-; N32-NEXT:    ori $6, $zero, 65520
-; N32-NEXT:    jal memcpy
 ; N32-NEXT:    move $4, $16
+; N32-NEXT:    jal memcpy
+; N32-NEXT:    ori $6, $zero, 65520
 ; N32-NEXT:    addiu $5, $16, 64
 ; N32-NEXT:    ori $1, $zero, 65456
 ; N32-NEXT:    subu $sp, $sp, $1
-; N32-NEXT:    ori $6, $zero, 65456
-; N32-NEXT:    jal memcpy
 ; N32-NEXT:    move $4, $sp
+; N32-NEXT:    jal memcpy
+; N32-NEXT:    ori $6, $zero, 65456
 ; N32-NEXT:    ld $11, 64($sp)
 ; N32-NEXT:    ld $10, 56($sp)
 ; N32-NEXT:    ld $9, 48($sp)
@@ -309,15 +309,15 @@ define dso_local void @g2(ptr %a) {
 ; N64-NEXT:    daddu $1, $sp, $1
 ; N64-NEXT:    sd $4, -8($1)
 ; N64-NEXT:    daddiu $16, $sp, 8
-; N64-NEXT:    ori $6, $zero, 65520
-; N64-NEXT:    jal memcpy
 ; N64-NEXT:    move $4, $16
+; N64-NEXT:    jal memcpy
+; N64-NEXT:    ori $6, $zero, 65520
 ; N64-NEXT:    ori $1, $zero, 65456
 ; N64-NEXT:    dsubu $sp, $sp, $1
 ; N64-NEXT:    daddiu $5, $16, 64
-; N64-NEXT:    ori $6, $zero, 65456
-; N64-NEXT:    jal memcpy
 ; N64-NEXT:    move $4, $sp
+; N64-NEXT:    jal memcpy
+; N64-NEXT:    ori $6, $zero, 65456
 ; N64-NEXT:    ld $11, 64($sp)
 ; N64-NEXT:    ld $10, 56($sp)
 ; N64-NEXT:    ld $9, 48($sp)
