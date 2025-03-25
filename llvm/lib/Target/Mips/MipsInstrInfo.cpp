@@ -678,6 +678,34 @@ bool MipsInstrInfo::HasLoadDelaySlot(const MachineInstr &MI) const {
   }
 }
 
+bool MipsInstrInfo::isAsCheapAsAMove(const MachineInstr &MI) const {
+  const unsigned Opcode = MI.getOpcode();
+  switch (Opcode) {
+  default:
+    break;
+  case Mips::ORi:
+  case Mips::ORi64:
+  case Mips::ORi_MM:
+  case Mips::ANDi:
+  case Mips::ANDi64:
+  case Mips::ANDi_MM:
+    if (MI.getOperand(2).isImm() && MI.getOperand(2).getImm() == -1)
+	    return true;
+    [[fallthrough]];
+  case Mips::ADDiu:
+  case Mips::ADDiu_MM:
+  case Mips::DADDiu:
+  case Mips::XORi:
+  case Mips::XORi64:
+  case Mips::XORi_MM:
+    if (MI.getOperand(2).isImm() && MI.getOperand(2).getImm() == 0)
+	    return true;
+    return MI.getOperand(1).isReg() &&
+            (MI.getOperand(1).getReg() == Mips::ZERO || MI.getOperand(1).getReg() == Mips::ZERO_64);
+  }
+  return MI.isAsCheapAsAMove();
+}
+
 /// Return the number of bytes of code the specified instruction may be.
 unsigned MipsInstrInfo::getInstSizeInBytes(const MachineInstr &MI) const {
   switch (MI.getOpcode()) {

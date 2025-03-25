@@ -598,6 +598,175 @@ static int getEquivalentCallShort(int Opcode) {
   }
 }
 
+static bool canSwapLoadStoreWith(const MachineInstr &I, const MachineInstr &N) {
+  if (N.mayLoadOrStore())
+    return false;
+  bool ImayLoad = I.mayLoad();
+
+  auto *Fn = I.getParent()->getParent();
+  auto *TRI = Fn->getSubtarget().getRegisterInfo();
+  for(const auto &MO_I : I.operands()) {
+    if (!MO_I.isReg())
+      continue;
+    Register RegI = MO_I.getReg();
+    for(const auto &MO_N : N.operands()) {
+      if (!MO_N.isReg())
+        continue;
+      Register RegN = MO_N.getReg();
+      if ((MO_N.isDef() || ImayLoad) && (TRI->isSubRegisterEq(RegN, RegI) || TRI->isSubRegisterEq(RegI, RegN)))
+	    return false;
+    }
+  }
+  return true;
+}
+
+static void adjustForDelaySlot(MachineBasicBlock &MBB) {
+  for (Iter I = MBB.begin(); I != MBB.end(); ++I) {
+    //   SW $x, $1, imm1
+    //   ADDIU $1, $1, imm2
+    //   BEQ $1, $y, Lable
+    // can be
+    //   ADDIU $1, $1, imm2
+    //   SW $x, $1, imm1-imm2
+    //   BEQ $1, $y, Lable
+    // so that SW can be placed into delay slot.
+    // FIXME: Support other LD/ST instrutions with non-16bit Imm.
+    size_t StoreImmBits = 0;
+    switch (I->getOpcode()) {
+    default:
+      break;
+    case Mips::SW:
+    case Mips::LW:
+    case Mips::LWu:
+    case Mips::SW64:
+    case Mips::LW64:
+    case Mips::SW_MM:
+    case Mips::LW_MM:
+    case Mips::SW_MMR6:
+    case Mips::LW_MMR6:
+    case Mips::SWC1:
+    case Mips::SWC2:
+    case Mips::SWC3:
+    case Mips::LWC1:
+    case Mips::LWC2:
+    case Mips::LWC3:
+    case Mips::SD:
+    case Mips::LD:
+    case Mips::SDC1:
+    case Mips::LDC1:
+    case Mips::SDC164:
+    case Mips::LDC164:
+    case Mips::SDC1_D64_MMR6:
+    case Mips::SDC1_MM_D32:
+    case Mips::SDC1_MM_D64:
+    case Mips::LDC1_D64_MMR6:
+    case Mips::LDC1_MM_D32:
+    case Mips::LDC1_MM_D64:
+    case Mips::SDC2:
+    case Mips::LDC2:
+    case Mips::SDC3:
+    case Mips::LDC3:
+    case Mips::SH:
+    case Mips::LH:
+    case Mips::LHu:
+    case Mips::SH64:
+    case Mips::LH64:
+    case Mips::LHu64:
+    case Mips::SH_MM:
+    case Mips::LH_MM:
+    case Mips::LHu_MM:
+    case Mips::SH_MMR6:
+    case Mips::SB:
+    case Mips::LB:
+    case Mips::LBu:
+    case Mips::SB64:
+    case Mips::LB64:
+    case Mips::LBu64:
+    case Mips::SB_MM:
+    case Mips::LB_MM:
+    case Mips::LBu_MM:
+    case Mips::SB_MMR6:
+    case Mips::LB_MMR6:
+      StoreImmBits = 16;
+      break;
+    case Mips::SWC2_R6:
+    case Mips::SWC2_MMR6:
+    case Mips::SDC2_R6:
+    case Mips::SDC2_MMR6:
+      StoreImmBits = 11;
+      break;
+    case Mips::LWE:
+    case Mips::LWE_MM:
+    case Mips::SWE:
+    case Mips::SWE_MM:
+    case Mips::LHE:
+    case Mips::LHE_MM:
+    case Mips::LHuE:
+    case Mips::LHuE_MM:
+    case Mips::SHE:
+    case Mips::SHE_MM:
+    case Mips::LBE:
+    case Mips::LBE_MM:
+    case Mips::LBuE:
+    case Mips::LBuE_MM:
+    case Mips::SBE:
+    case Mips::SBE_MM:
+      StoreImmBits = 9;
+      break;
+    }
+    Iter N = I;
+    while (StoreImmBits > 0 && N != MBB.end()) {
+      N = std::next(N);
+      if (N == MBB.end())
+	break;
+      bool Clobbered = false;
+      assert ((I->getOperand(0).isReg() && I->getOperand(1).isReg()) && "Bad Load/Store instruction");
+      switch (N->getOpcode()) {
+      default: break;
+      case Mips::ADDiu:
+      case Mips::ADDiu_MM:
+      case Mips::DADDiu: {
+        if (I->getOperand(2).isImm() &&
+            N->getOperand(0).isReg() && N->getOperand(1).isReg() &&
+            I->getOperand(1).getReg() == N->getOperand(1).getReg() &&
+            N->getOperand(0).getReg() == N->getOperand(1).getReg() &&
+            I->getOperand(0).getReg() != N->getOperand(1).getReg() &&
+            I->getOperand(1).getReg() != Mips::SP &&
+            I->getOperand(1).getReg() != Mips::SP_64 &&
+            N->getOperand(2).isImm()) {
+          int64_t StoreImm = I->getOperand(2).getImm();
+          int64_t ADDiuImm = N->getOperand(2).getImm();
+          int64_t NewStoreImm = StoreImm - ADDiuImm;
+          if ((StoreImmBits == 16 && isInt<16>(NewStoreImm)) ||
+              (StoreImmBits == 12 && !isInt<12>(NewStoreImm)) ||
+              (StoreImmBits == 11 && !isInt<11>(NewStoreImm)) ||
+              (StoreImmBits == 10 && !isInt<10>(NewStoreImm)) ||
+              (StoreImmBits == 9 && !isInt<9>(NewStoreImm)) ||
+              (StoreImmBits == 4 && !isInt<4>(NewStoreImm)))
+            LLVM_DEBUG(dbgs() << DEBUG_TYPE ": Found Store and ADDiu.\n";
+                       I->dump());
+          else {
+            LLVM_DEBUG(dbgs() << DEBUG_TYPE
+                           ": Found Store and ADDiu, while Imm overflowed.\n";
+                       I->dump());
+            continue;
+          }
+          MBB.remove(&(*I));
+          I->getOperand(2).setImm(NewStoreImm);
+          MBB.insertAfter(N, &(*I));
+	  Clobbered = true;
+        }
+        break;
+      }
+      }
+      if (!canSwapLoadStoreWith(*I, *N))
+	  Clobbered = true;
+      if (Clobbered)
+	break;
+    }
+  }
+}
+
 /// runOnMachineBasicBlock - Fill in delay slots for the given basic block.
 /// We assume there is only one delay slot per delayed instruction.
 bool MipsDelaySlotFiller::runOnMachineBasicBlock(MachineBasicBlock &MBB) {
@@ -605,6 +774,8 @@ bool MipsDelaySlotFiller::runOnMachineBasicBlock(MachineBasicBlock &MBB) {
   const MipsSubtarget &STI = MBB.getParent()->getSubtarget<MipsSubtarget>();
   bool InMicroMipsMode = STI.inMicroMipsMode();
   const MipsInstrInfo *TII = STI.getInstrInfo();
+
+  adjustForDelaySlot(MBB);
 
   for (Iter I = MBB.begin(); I != MBB.end(); ++I) {
     if (!hasUnoccupiedSlot(&*I))

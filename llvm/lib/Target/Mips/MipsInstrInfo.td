@@ -2034,13 +2034,13 @@ let AdditionalPredicates = [NotInMicroMips] in {
 
   def ANDi : MMRel, StdMMR6Rel,
              ArithLogicI<"andi", uimm16, GPR32Opnd, II_ANDI, imm32ZExt16, and>,
-             ADDI_FM<0xc>, ISA_MIPS1;
+             ADDI_FM<0xc>, IsAsCheapAsAMove, ISA_MIPS1;
   def ORi  : MMRel, StdMMR6Rel,
              ArithLogicI<"ori", uimm16, GPR32Opnd, II_ORI, imm32ZExt16, or>,
-             ADDI_FM<0xd>, ISA_MIPS1;
+             ADDI_FM<0xd>, IsAsCheapAsAMove, ISA_MIPS1;
   def XORi : MMRel, StdMMR6Rel,
              ArithLogicI<"xori", uimm16, GPR32Opnd, II_XORI, imm32ZExt16, xor>,
-             ADDI_FM<0xe>, ISA_MIPS1;
+             ADDI_FM<0xe>, IsAsCheapAsAMove, ISA_MIPS1;
   def ADDi  : MMRel, ArithLogicI<"addi", simm16_relaxed, GPR32Opnd, II_ADDI>,
               ADDI_FM<0x8>, ISA_MIPS1_NOT_32R6_64R6;
   def SLTi  : MMRel, SetCC_I<"slti", setlt, simm16, immSExt16, GPR32Opnd>,

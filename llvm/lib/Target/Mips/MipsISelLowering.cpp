@@ -4394,6 +4394,9 @@ bool MipsTargetLowering::isLegalAddressingMode(const DataLayout &DL,
   if (AM.BaseGV)
     return false;
 
+  if (!isInt<16>(AM.BaseOffs))
+    return false;
+
   switch (AM.Scale) {
   case 0: // "r+i" or just "i", depending on HasBaseReg.
     break;
@@ -4429,6 +4432,14 @@ bool MipsTargetLowering::isFPImmLegal(const APFloat &Imm, EVT VT,
   if (Imm.isNegZero())
     return false;
   return Imm.isZero();
+}
+
+bool MipsTargetLowering::isLegalICmpImmediate(int64_t Imm) const {
+  return isInt<16>(Imm);
+}
+
+bool MipsTargetLowering::isLegalAddImmediate(int64_t Imm) const {
+  return isInt<16>(Imm);
 }
 
 unsigned MipsTargetLowering::getJumpTableEncoding() const {
