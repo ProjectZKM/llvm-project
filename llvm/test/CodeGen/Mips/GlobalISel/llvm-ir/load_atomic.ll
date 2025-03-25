@@ -188,10 +188,10 @@ define double @atomic_load_unordered_f64(ptr %ptr) {
 ; MIPS32-NEXT:    .cfi_def_cfa_offset 24
 ; MIPS32-NEXT:    sw $ra, 20($sp) # 4-byte Folded Spill
 ; MIPS32-NEXT:    .cfi_offset 31, -4
-; MIPS32-NEXT:    ori $5, $zero, 0
 ; MIPS32-NEXT:    ori $1, $zero, 128
-; MIPS32-NEXT:    jal __atomic_load_8
 ; MIPS32-NEXT:    addu $4, $4, $1
+; MIPS32-NEXT:    jal __atomic_load_8
+; MIPS32-NEXT:    ori $5, $zero, 0
 ; MIPS32-NEXT:    mtc1 $2, $f0
 ; MIPS32-NEXT:    mtc1 $3, $f1
 ; MIPS32-NEXT:    lw $ra, 20($sp) # 4-byte Folded Reload
@@ -400,10 +400,10 @@ define double @atomic_load_monotonic_f64(ptr %ptr) {
 ; MIPS32-NEXT:    .cfi_def_cfa_offset 24
 ; MIPS32-NEXT:    sw $ra, 20($sp) # 4-byte Folded Spill
 ; MIPS32-NEXT:    .cfi_offset 31, -4
-; MIPS32-NEXT:    ori $5, $zero, 0
 ; MIPS32-NEXT:    ori $1, $zero, 128
-; MIPS32-NEXT:    jal __atomic_load_8
 ; MIPS32-NEXT:    addu $4, $4, $1
+; MIPS32-NEXT:    jal __atomic_load_8
+; MIPS32-NEXT:    ori $5, $zero, 0
 ; MIPS32-NEXT:    mtc1 $2, $f0
 ; MIPS32-NEXT:    mtc1 $3, $f1
 ; MIPS32-NEXT:    lw $ra, 20($sp) # 4-byte Folded Reload
@@ -626,10 +626,10 @@ define double @atomic_load_acquire_f64(ptr %ptr) {
 ; MIPS32-NEXT:    .cfi_def_cfa_offset 24
 ; MIPS32-NEXT:    sw $ra, 20($sp) # 4-byte Folded Spill
 ; MIPS32-NEXT:    .cfi_offset 31, -4
-; MIPS32-NEXT:    ori $5, $zero, 2
 ; MIPS32-NEXT:    ori $1, $zero, 128
-; MIPS32-NEXT:    jal __atomic_load_8
 ; MIPS32-NEXT:    addu $4, $4, $1
+; MIPS32-NEXT:    jal __atomic_load_8
+; MIPS32-NEXT:    ori $5, $zero, 2
 ; MIPS32-NEXT:    mtc1 $2, $f0
 ; MIPS32-NEXT:    mtc1 $3, $f1
 ; MIPS32-NEXT:    lw $ra, 20($sp) # 4-byte Folded Reload
@@ -853,10 +853,10 @@ define double @atomic_load_seq_cst_f64(ptr %ptr) {
 ; MIPS32-NEXT:    .cfi_def_cfa_offset 24
 ; MIPS32-NEXT:    sw $ra, 20($sp) # 4-byte Folded Spill
 ; MIPS32-NEXT:    .cfi_offset 31, -4
-; MIPS32-NEXT:    ori $5, $zero, 5
 ; MIPS32-NEXT:    ori $1, $zero, 128
-; MIPS32-NEXT:    jal __atomic_load_8
 ; MIPS32-NEXT:    addu $4, $4, $1
+; MIPS32-NEXT:    jal __atomic_load_8
+; MIPS32-NEXT:    ori $5, $zero, 5
 ; MIPS32-NEXT:    mtc1 $2, $f0
 ; MIPS32-NEXT:    mtc1 $3, $f1
 ; MIPS32-NEXT:    lw $ra, 20($sp) # 4-byte Folded Reload
