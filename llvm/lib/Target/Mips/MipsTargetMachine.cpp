@@ -248,6 +248,7 @@ public:
   bool addInstSelector() override;
   void addPreEmitPass() override;
   void addPreRegAlloc() override;
+  void addPostRewrite() override;
   bool addIRTranslator() override;
   void addPreLegalizeMachineIR() override;
   bool addLegalizeMachineIR() override;
@@ -287,6 +288,10 @@ bool MipsPassConfig::addInstSelector() {
 
 void MipsPassConfig::addPreRegAlloc() {
   addPass(createMipsOptimizePICCallPass());
+}
+
+void MipsPassConfig::addPostRewrite() {
+  addPass(createMipsLoopReduceHiLoPass());
 }
 
 TargetTransformInfo

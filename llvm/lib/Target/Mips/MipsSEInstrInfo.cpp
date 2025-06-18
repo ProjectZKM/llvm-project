@@ -707,8 +707,11 @@ void MipsSEInstrInfo::expandPseudoMTLoHi(MachineBasicBlock &MBB,
 
   DebugLoc DL = I->getDebugLoc();
   const MachineOperand &SrcLo = I->getOperand(1), &SrcHi = I->getOperand(2);
-  MachineInstrBuilder LoInst = BuildMI(MBB, I, DL, get(LoOpc));
-  MachineInstrBuilder HiInst = BuildMI(MBB, I, DL, get(HiOpc));
+  MachineInstrBuilder LoInst, HiInst;
+  if (!SrcLo.isUndef())
+    LoInst = BuildMI(MBB, I, DL, get(LoOpc));
+  if (!SrcHi.isUndef())
+    HiInst = BuildMI(MBB, I, DL, get(HiOpc));
 
   // Add lo/hi registers if the mtlo/hi instructions created have explicit
   // def registers.
@@ -716,12 +719,15 @@ void MipsSEInstrInfo::expandPseudoMTLoHi(MachineBasicBlock &MBB,
     Register DstReg = I->getOperand(0).getReg();
     Register DstLo = getRegisterInfo().getSubReg(DstReg, Mips::sub_lo);
     Register DstHi = getRegisterInfo().getSubReg(DstReg, Mips::sub_hi);
-    LoInst.addReg(DstLo, RegState::Define);
-    HiInst.addReg(DstHi, RegState::Define);
+    if (!SrcLo.isUndef())
+      LoInst.addReg(DstLo, RegState::Define);
+    if (!SrcHi.isUndef())
+      HiInst.addReg(DstHi, RegState::Define);
   }
-
-  LoInst.addReg(SrcLo.getReg(), getKillRegState(SrcLo.isKill()));
-  HiInst.addReg(SrcHi.getReg(), getKillRegState(SrcHi.isKill()));
+  if (!SrcLo.isUndef())
+    LoInst.addReg(SrcLo.getReg(), getKillRegState(SrcLo.isKill()));
+  if (!SrcHi.isUndef())
+    HiInst.addReg(SrcHi.getReg(), getKillRegState(SrcHi.isKill()));
 }
 
 void MipsSEInstrInfo::expandCvtFPInt(MachineBasicBlock &MBB,
