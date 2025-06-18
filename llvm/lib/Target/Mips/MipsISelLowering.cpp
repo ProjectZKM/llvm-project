@@ -1023,6 +1023,62 @@ static SDValue performORCombine(SDNode *N, SelectionDAG &DAG,
   }
 }
 
+static SDValue performMADD_MSUBCombineLow(SDNode *ROOTNode,
+                                          SelectionDAG &CurDAG,
+                                          const MipsSubtarget &Subtarget) {
+  SDValue Mult = ROOTNode->getOperand(0).getOpcode() == ISD::MUL
+                     ? ROOTNode->getOperand(0)
+                     : ROOTNode->getOperand(1);
+
+  SDValue AddOperand = ROOTNode->getOperand(0).getOpcode() == ISD::MUL
+                           ? ROOTNode->getOperand(1)
+                           : ROOTNode->getOperand(0);
+  if (Mult.getValueType() != MVT::i32 ||
+      Mult.getOperand(0).getValueType() != MVT::i32 ||
+      Mult.getOperand(1).getValueType() != MVT::i32)
+    return SDValue();
+
+  unsigned AddOpcode = AddOperand.getOpcode();
+  if (AddOpcode != ISD::MUL && AddOpcode != ISD::SDIV &&
+      AddOpcode != ISD::UDIV && AddOpcode != ISD::CopyFromReg &&
+      AddOpcode != MipsISD::MAdd && AddOpcode != MipsISD::MAddu &&
+      AddOpcode != MipsISD::MSub && AddOpcode != MipsISD::MSubu &&
+      AddOpcode != MipsISD::MFLO && true)
+    return SDValue();
+
+  if (!Mult.hasOneUse() || !AddOperand.hasOneUse())
+    return SDValue();
+  if (!ROOTNode->hasOneUse())
+    return SDValue();
+
+  SDLoc DL(ROOTNode);
+  if (AddOpcode == ISD::MUL) {
+    AddOperand =
+        CurDAG.getNode(MipsISD::Mult, DL, MVT::Untyped,
+                       AddOperand.getOperand(0), AddOperand.getOperand(1));
+  } else if (AddOpcode == ISD::SDIV) {
+    AddOperand =
+        CurDAG.getNode(MipsISD::DivRem, DL, MVT::Untyped,
+                       AddOperand.getOperand(0), AddOperand.getOperand(1));
+  } else if (AddOpcode == ISD::UDIV) {
+    AddOperand =
+        CurDAG.getNode(MipsISD::DivRemU, DL, MVT::Untyped,
+                       AddOperand.getOperand(0), AddOperand.getOperand(1));
+  } else if (AddOpcode == MipsISD::MFLO) {
+    AddOperand = AddOperand.getOperand(0);
+  } else if (AddOpcode == ISD::CopyFromReg) {
+    AddOperand = CurDAG.getNode(MipsISD::MTLOHI, DL, MVT::Untyped, AddOperand,
+                                CurDAG.getUNDEF(MVT::i32));
+  }
+
+  bool IsAdd = ROOTNode->getOpcode() == ISD::ADD;
+  unsigned Opcode = IsAdd ? MipsISD::MAddu : MipsISD::MSubu;
+  SDValue MAddu = CurDAG.getNode(Opcode, DL, MVT::Untyped, Mult->getOperand(0),
+                                Mult->getOperand(1), AddOperand);
+  SDValue ResLo = CurDAG.getNode(MipsISD::MFLO, DL, MVT::i32, MAddu);
+  return ResLo;
+}
+
 static SDValue performMADD_MSUBCombine(SDNode *ROOTNode, SelectionDAG &CurDAG,
                                        const MipsSubtarget &Subtarget) {
   // ROOTNode must have a multiplication as an operand for the match to be
@@ -1031,16 +1087,22 @@ static SDValue performMADD_MSUBCombine(SDNode *ROOTNode, SelectionDAG &CurDAG,
       ROOTNode->getOperand(1).getOpcode() != ISD::MUL)
     return SDValue();
 
-  // In the case where we have a multiplication as the left operand of
+  // In the case where we have not a multiplication as the right operand of
   // of a subtraction, we can't combine into a MipsISD::MSub node as the
   // the instruction definition of msub(u) places the multiplication on
   // on the right.
   if (ROOTNode->getOpcode() == ISD::SUB &&
-      ROOTNode->getOperand(0).getOpcode() == ISD::MUL)
+      ROOTNode->getOperand(1).getOpcode() != ISD::MUL)
     return SDValue();
 
   // We don't handle vector types here.
   if (ROOTNode->getValueType(0).isVector())
+    return SDValue();
+
+  if (ROOTNode->getValueType(0) == MVT::i32)
+    return performMADD_MSUBCombineLow(ROOTNode, CurDAG, Subtarget);
+
+  if (ROOTNode->getValueType(0) != MVT::i64)
     return SDValue();
 
   // For MIPS64, madd / msub instructions are inefficent to use with 64 bit
@@ -1139,7 +1201,7 @@ static SDValue performADDCombine(SDNode *N, SelectionDAG &DAG,
   // (add v0 (mul v1, v2)) => (madd v1, v2, v0)
   if (DCI.isBeforeLegalizeOps()) {
     if (Subtarget.hasMips32() && !Subtarget.hasMips32r6() &&
-        !Subtarget.inMips16Mode() && N->getValueType(0) == MVT::i64)
+        !Subtarget.inMips16Mode())
       return performMADD_MSUBCombine(N, DAG, Subtarget);
 
     return SDValue();

@@ -20,6 +20,14 @@
 #define IsMFLOMFHI(instr)                                                      \
   (instr == Mips::MFLO || instr == Mips::MFLO64 || instr == Mips::MFHI ||      \
    instr == Mips::MFHI64)
+#define IsPseudoMFLOMFHI(instr)                                                \
+  (instr == Mips::PseudoMFLO || instr == Mips::PseudoMFLO64 ||                 \
+   instr == Mips::PseudoMFHI || instr == Mips::PseudoMFHI64)
+#define IsMTLOMTHI(instr)                                                      \
+  (instr == Mips::MTLO || instr == Mips::MTLO64 || instr == Mips::MTHI ||      \
+   instr == Mips::MTHI64)
+#define IsPseudoMTLOHI(instr)                                                  \
+  (instr == Mips::PseudoMTLOHI || instr == Mips::PseudoMTLOHI64)
 #define IsDIVMULT(instr)                                                       \
   (instr == Mips::SDIV || instr == Mips::PseudoSDIV || instr == Mips::DSDIV || \
    instr == Mips::PseudoDSDIV || instr == Mips::UDIV ||                        \
@@ -27,6 +35,11 @@
    instr == Mips::PseudoDUDIV || instr == Mips::MULT ||                        \
    instr == Mips::PseudoMULT || instr == Mips::DMULT ||                        \
    instr == Mips::PseudoDMULT)
+#define IsMAddMSub(instr)                                                      \
+  (instr == Mips::MADD || instr == Mips::MADDU || instr == Mips::MSUB ||       \
+   instr == Mips::MSUBU || instr == Mips::PseudoMADD ||                        \
+   instr == Mips::PseudoMADDU || instr == Mips::PseudoMSUB ||                  \
+   instr == Mips::PseudoMSUBU)
 
 namespace llvm {
 class FunctionPass;
@@ -51,6 +64,7 @@ FunctionPass *createMipsExpandPseudoPass();
 FunctionPass *createMipsPreLegalizeCombiner();
 FunctionPass *createMipsPostLegalizeCombiner(bool IsOptNone);
 FunctionPass *createMipsMulMulBugPass();
+FunctionPass *createMipsLoopReduceHiLoPass();
 
 InstructionSelector *
 createMipsInstructionSelector(const MipsTargetMachine &, const MipsSubtarget &,
