@@ -1397,6 +1397,59 @@ addLiveIn(MachineFunction &MF, unsigned PReg, const TargetRegisterClass *RC)
   return VReg;
 }
 
+static bool knownOperandNotZero(MachineOperand *Op, bool Is64Bit) {
+  //FIXME: Should we support IMM?
+  if (!Op->isReg())
+	  return false;
+
+  MachineInstr *MI = Op->getParent();
+  MachineBasicBlock *MBB = MI->getParent();
+
+  MachineBasicBlock::reverse_iterator I(*MI);
+  uint64_t ADDiuImm = 0;
+  for(I++; I != MBB->rend(); I++) {
+    MachineOperand &Op0 = I->getOperand(0);
+    if (!Op0.isReg() || Op0.getReg() != Op->getReg())
+      continue;
+    unsigned IOpcode = I->getOpcode();
+    if (IOpcode == Mips::LUi || IOpcode == Mips::LUi64 || IOpcode == Mips::LUi_MM || IOpcode == Mips::LUI_MMR6) {
+      MachineOperand &Op1 = I->getOperand(1);
+      if (Op1.isImm() && Op1.getImm() != 0)
+        return true;
+      else
+        return false;
+    }
+    if (ADDiuImm != 0 && (IOpcode == Mips::SLL || IOpcode == Mips::DSLL || IOpcode == Mips::DSLL32 || IOpcode == Mips::SLL_MMR6)) {
+      MachineOperand &Op2 = I->getOperand(2);
+      if (!Op2.isImm())
+        return false;
+      uint64_t SLLImm = Op2.getImm();
+      if (IOpcode == Mips::DSLL32)
+        SLLImm += 32;
+      uint64_t SLLMask = (1 << SLLImm) - 1;
+      if (SLLMask & ADDiuImm)
+        return true;
+      return false;
+    }
+    if (ADDiuImm != 0)
+      return false;
+    bool IisADDiu = IOpcode == Mips::ADDiu || IOpcode == Mips::ADDiu_MM || IOpcode == Mips::DADDiu;
+    bool IisORi = IOpcode == Mips::ORi || IOpcode == Mips::ORi_MM || IOpcode == Mips::ORi64;
+    if (!(IisADDiu || IisORi))
+      return false;
+    MachineOperand &Op1 = I->getOperand(1);
+    MachineOperand &Op2 = I->getOperand(2);
+    if (Op1.isReg()
+        && (Op1.getReg() == Mips::ZERO || Op1.getReg() == Mips::ZERO_64)
+        && Op2.isImm() && Op2.getImm() != 0)
+      return true;
+    ADDiuImm = Op2.getImm();
+    Op = &Op1;
+  }
+
+  return false;
+}
+
 static MachineBasicBlock *insertDivByZeroTrap(MachineInstr &MI,
                                               MachineBasicBlock &MBB,
                                               const TargetInstrInfo &TII,
@@ -1408,6 +1461,11 @@ static MachineBasicBlock *insertDivByZeroTrap(MachineInstr &MI,
   MachineBasicBlock::iterator I(MI);
   MachineInstrBuilder MIB;
   MachineOperand &Divisor = MI.getOperand(2);
+
+  if (knownOperandNotZero(&Divisor, Is64Bit)) {
+    return &MBB;
+  }
+
   MIB = BuildMI(MBB, std::next(I), MI.getDebugLoc(),
                 TII.get(IsMicroMips ? Mips::TEQ_MM : Mips::TEQ))
             .addReg(Divisor.getReg(), getKillRegState(Divisor.isKill()))
