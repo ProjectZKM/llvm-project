@@ -288,6 +288,7 @@ bool MipsPassConfig::addInstSelector() {
 
 void MipsPassConfig::addPreRegAlloc() {
   addPass(createMipsOptimizePICCallPass());
+  addPass(createMipsOptimizeLoadStoreImmPass());
 }
 
 void MipsPassConfig::addPostRewrite() {
