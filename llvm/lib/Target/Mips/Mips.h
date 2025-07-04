@@ -65,6 +65,7 @@ FunctionPass *createMipsPreLegalizeCombiner();
 FunctionPass *createMipsPostLegalizeCombiner(bool IsOptNone);
 FunctionPass *createMipsMulMulBugPass();
 FunctionPass *createMipsLoopReduceHiLoPass();
+FunctionPass *createMipsOptimizeLoadStoreImmPass();
 
 InstructionSelector *
 createMipsInstructionSelector(const MipsTargetMachine &, const MipsSubtarget &,
