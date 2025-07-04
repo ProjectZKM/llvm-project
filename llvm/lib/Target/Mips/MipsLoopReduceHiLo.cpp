@@ -92,6 +92,8 @@ bool LoopReduceHiLo::notReadAndWriteSrcAndHiLo(MachineBasicBlock &MBB, Iter I,
   ReverseIter rI(std::prev(I));
   for (; rI != MBB.rend(); rI++) {
     unsigned Opcode = rI->getOpcode();
+    if (rI->getNumOperands() == 0)
+      continue;
     MachineOperand Op0 = rI->getOperand(0);
     if (IsMFLOMFHI(Opcode) || IsPseudoMFLOMFHI(Opcode) || IsMTLOMTHI(Opcode) ||
         IsPseudoMTLOHI(Opcode) || IsDIVMULT(Opcode) || IsMAddMSub(Opcode))
