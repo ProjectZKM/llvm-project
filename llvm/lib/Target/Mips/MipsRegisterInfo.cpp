@@ -172,6 +172,13 @@ getReservedRegs(const MachineFunction &MF) const {
   for (MCPhysReg R : ReservedGPR64)
     Reserved.set(R);
 
+  if (Subtarget.useK0K1()) {
+    Reserved.reset(Mips::K0);
+    Reserved.reset(Mips::K1);
+    Reserved.reset(Mips::K0_64);
+    Reserved.reset(Mips::K1_64);
+  }
+
   // For mno-abicalls, GP is a program invariant!
   if (!Subtarget.isABICalls()) {
     Reserved.set(Mips::GP);
