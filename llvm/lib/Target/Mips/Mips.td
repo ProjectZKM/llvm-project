@@ -223,6 +223,10 @@ def FeatureZKM   : SubtargetFeature<"zkm", "HasZKM",
                                 "true", "Mips32r2 with ZKM extension Support",
                                 [FeatureMips32r2, FeatureDIVr6]>;
 
+def FeatureUseK0K1
+    : SubtargetFeature<"usek0k1", "UseK0K1", "true",
+                       "Allow use K0/K1 as temp registers">;
+
 //===----------------------------------------------------------------------===//
 // Register File, Calling Conv, Instruction Descriptions
 //===----------------------------------------------------------------------===//

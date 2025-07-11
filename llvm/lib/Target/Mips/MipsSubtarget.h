@@ -209,6 +209,9 @@ class MipsSubtarget : public MipsGenSubtargetInfo {
   // All the instructions have the same cost.
   bool InstSameCost;
 
+  // Allow use K0/K1 as temp registers.
+  bool UseK0K1 = false;
+
   /// The minimum alignment known to hold of the stack frame on
   /// entry to the function and which must be maintained by every function.
   Align stackAlignment;
@@ -392,6 +395,10 @@ public:
   }
 
   bool isInstSameCost() const { return InstSameCost; }
+
+  // Allow compiler to use K0/K1 as temp register.
+  // The kernel can use KScratch for interupt.
+  bool useK0K1() const { return hasMips32r2() && UseK0K1; }
 
   // Set helper classes
   void setHelperClassesMips16();
