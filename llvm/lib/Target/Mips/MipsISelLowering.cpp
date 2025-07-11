@@ -296,6 +296,7 @@ const char *MipsTargetLowering::getTargetNodeName(unsigned Opcode) const {
 MipsTargetLowering::MipsTargetLowering(const MipsTargetMachine &TM,
                                        const MipsSubtarget &STI)
     : TargetLowering(TM), Subtarget(STI), ABI(TM.getABI()) {
+  setSchedulingPreference(Sched::RegPressure);
   // Mips does not have i1 type, so use i32 for
   // setcc operations results (slt, sgt, ...).
   setBooleanContents(ZeroOrOneBooleanContent);

@@ -560,6 +560,7 @@ void MipsSEFrameLowering::emitInterruptPrologueStub(
   MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
   MachineBasicBlock::iterator MBBI = MBB.begin();
   DebugLoc DL = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
+  const MipsSubtarget &Subtarget = MF.getSubtarget<MipsSubtarget>();
 
   // Report an error the target doesn't support Mips32r2 or later.
   // The epilogue relies on the use of the "ehb" to clear execution
@@ -587,6 +588,25 @@ void MipsSEFrameLowering::emitInterruptPrologueStub(
   StringRef IntKind =
       MF.getFunction().getFnAttribute("interrupt").getValueAsString();
   const TargetRegisterClass *PtrRC = &Mips::GPR32RegClass;
+
+  if (Subtarget.useK0K1()) {
+    unsigned MTC0Opcode = Mips::MTC0;
+    unsigned K0Reg = Mips::K0;
+    unsigned K1Reg = Mips::K1;
+    if (Subtarget.isGP64bit()) {
+      MTC0Opcode = Mips::DMTC0;
+      K0Reg = Mips::K0_64;
+      K1Reg = Mips::K1_64;
+    }
+    BuildMI(MBB, MBBI, DL, STI.getInstrInfo()->get(MTC0Opcode), Mips::COP031)
+        .addReg(K0Reg)
+        .addImm(2)
+        .setMIFlag(MachineInstr::FrameSetup);
+    BuildMI(MBB, MBBI, DL, STI.getInstrInfo()->get(MTC0Opcode), Mips::COP031)
+        .addReg(K1Reg)
+        .addImm(3)
+        .setMIFlag(MachineInstr::FrameSetup);
+  }
 
   // EIC interrupt handling needs to read the Cause register to disable
   // interrupts.
@@ -748,6 +768,7 @@ void MipsSEFrameLowering::emitInterruptEpilogueStub(
   MachineBasicBlock::iterator MBBI = MBB.getLastNonDebugInstr();
   MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
   DebugLoc DL = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
+  const MipsSubtarget &Subtarget = MF.getSubtarget<MipsSubtarget>();
 
   // Perform ISR handling like GCC
   const TargetRegisterClass *PtrRC = &Mips::GPR32RegClass;
@@ -771,6 +792,23 @@ void MipsSEFrameLowering::emitInterruptEpilogueStub(
   BuildMI(MBB, MBBI, DL, STI.getInstrInfo()->get(Mips::MTC0), Mips::COP012)
       .addReg(Mips::K1)
       .addImm(0);
+
+  if (Subtarget.useK0K1()) {
+    unsigned MFC0Opcode = Mips::MFC0;
+    unsigned K0Reg = Mips::K0;
+    unsigned K1Reg = Mips::K1;
+    if (Subtarget.isGP64bit()) {
+      MFC0Opcode = Mips::DMTC0;
+      K0Reg = Mips::K0_64;
+      K1Reg = Mips::K1_64;
+    }
+    BuildMI(MBB, MBBI, DL, STI.getInstrInfo()->get(MFC0Opcode), K0Reg)
+        .addReg(Mips::COP031)
+        .addImm(2);
+    BuildMI(MBB, MBBI, DL, STI.getInstrInfo()->get(MFC0Opcode), K1Reg)
+        .addReg(Mips::COP031)
+        .addImm(3);
+  }
 }
 
 StackOffset

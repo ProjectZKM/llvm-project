@@ -51,6 +51,11 @@ static cl::opt<bool>
     EnableMulMulFix("mfix4300", cl::init(false),
                     cl::desc("Enable the VR4300 mulmul bug fix."), cl::Hidden);
 
+static cl::opt<bool>
+    EnableMachineCombinerPass("mips-machine-combiner",
+                              cl::desc("Enable the machine combiner pass"),
+                              cl::init(true), cl::Hidden);
+
 extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeMipsTarget() {
   // Register the target.
   RegisterTargetMachine<MipsebTargetMachine> X(getTheMipsTarget());
@@ -247,6 +252,7 @@ public:
   void addIRPasses() override;
   bool addInstSelector() override;
   void addPreEmitPass() override;
+  void addMachineSSAOptimization() override;
   void addPreRegAlloc() override;
   void addPostRewrite() override;
   bool addIRTranslator() override;
@@ -284,6 +290,13 @@ bool MipsPassConfig::addInstSelector() {
   addPass(createMips16ISelDag(getMipsTargetMachine(), getOptLevel()));
   addPass(createMipsSEISelDag(getMipsTargetMachine(), getOptLevel()));
   return false;
+}
+
+void MipsPassConfig::addMachineSSAOptimization() {
+  TargetPassConfig::addMachineSSAOptimization();
+
+  if (EnableMachineCombinerPass)
+    addPass(&MachineCombinerID);
 }
 
 void MipsPassConfig::addPreRegAlloc() {
