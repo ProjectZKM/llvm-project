@@ -4294,6 +4294,7 @@ bool MipsAsmParser::expandDivRem(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
       LabelOp =
           MCOperand::createExpr(MCSymbolRefExpr::create(BrTarget, Context));
       TOut.emitRRX(Mips::BNE, RtReg, ZeroReg, LabelOp, IDLoc, STI);
+      TOut.emitNop(IDLoc, STI);
     }
 
     if (!UseTraps)
