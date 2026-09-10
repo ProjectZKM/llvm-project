@@ -597,6 +597,22 @@ static int getEquivalentCallShort(int Opcode) {
 static bool canSwapLoadStoreWith(const MachineInstr &I, const MachineInstr &N) {
   if (N.mayLoadOrStore())
     return false;
+  // Never move a load/store across a call, a terminator, or anything with
+  // unmodeled side effects: a call's clobbers are a register mask, not
+  // register operands, so the operand scan below cannot see that the
+  // caller-saved register the store reads (e.g. $1/$at) dies at the call.
+  if (N.isCall() || N.isTerminator() || N.isBranch() ||
+      N.hasUnmodeledSideEffects() || N.isInlineAsm())
+    return false;
+  for (const auto &MO_N : N.operands()) {
+    if (!MO_N.isRegMask())
+      continue;
+    for (const auto &MO_I : I.operands()) {
+      if (MO_I.isReg() && MO_I.getReg().isPhysical() &&
+          MO_N.clobbersPhysReg(MO_I.getReg()))
+        return false;
+    }
+  }
   bool ImayLoad = I.mayLoad();
 
   auto *Fn = I.getParent()->getParent();
